@@ -1,0 +1,106 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/3/syntax.html and https://pathofexile.gamepedia.com/Item_filter
+name: Path of Exile Filter
+file_extensions:
+  - filter
+scope: source.poe-filter
+
+variables:
+  whitespace: '[ \t]'
+  block: 'Show|Hide'
+  bool_consts: 'True|False'
+  comp_operators: '<=|>=|<|>|='
+
+  conditions: 'Class|BaseType|SocketGroup|HasExplicitMod'
+  comp_conditions: 'ItemLevel|DropLevel|Quality|Rarity|Sockets|LinkedSockets|Height|Width|StackSize|GemLevel|MapTier'
+  bool_conditions: 'Identified|Corrupted|ElderItem|ShaperItem|ShapedMap'
+  actions: 'SetBorderColor|SetTextColor|SetBackgroundColor|SetFontSize|PlayAlertSound|PlayAlertSoundPositional|DisableDropSound|CustomAlertSound|MinimapIcon|PlayEffect'
+
+contexts:
+  comment:
+    - match: '#'
+      scope: punctuation.definition.comment.poe-filter
+      push:
+        - meta_scope: comment.line.poe-filter
+        - match: $
+          pop: true
+
+  prototype:
+    - include: comment
+
+  main:
+    - match: ^{{whitespace}}*({{block}})\b
+      scope: keyword.other.poe-filter
+      push: block
+
+  block:
+    - meta_content_scope: meta.block.poe-filter
+
+    - match: (?=^{{whitespace}}*(?:{{block}})\b)
+      pop: true
+
+    - match: '^{{whitespace}}*'
+      push: block_line
+
+  block_line:
+    - match: $
+      pop: true
+
+    # Conditions
+    - match: ({{conditions}}){{whitespace}}+
+      scope: meta.condition.poe-filter
+      captures:
+        1: entity.name.constant.poe-filter
+      push: condition_value
+
+      # Conditions - comparisons
+    - match: ({{comp_conditions}})(?:{{whitespace}}+({{comp_operators}}))?{{whitespace}}+(?:(\d+)|(.+))
+      scope: meta.condition.poe-filter
+      captures:
+        1: entity.name.constant.poe-filter
+        2: keyword.operator.comparison.poe-filter
+        3: constant.numeric.poe-filter
+
+    # Conditions - boolean
+    - match: ({{bool_conditions}}){{whitespace}}+({{bool_consts}})
+      scope: meta.condition.poe-filter
+      captures:
+        1: entity.name.constant.poe-filter
+        2: constant.language.poe-filter
+
+    # Actions
+    - match: ({{actions}}){{whitespace}}+
+      scope: meta.function-call.poe-filter
+      captures:
+        1: variable.function.poe-filter
+      push: parameters
+
+  condition_value:
+    - match: $
+      pop: true
+
+    - include: number
+    - include: string
+
+  parameters:
+    - meta_content_scope: variable.parameter.poe-filter
+
+    - match: $
+      pop: true
+
+    - include: number
+    - include: string
+
+  number:
+    - match: \b\d+\b
+      scope: constant.numeric.poe-filter
+
+  string:
+    - match: '"'
+      scope: punctuation.definition.string.begin.poe-filter
+      push:
+        - meta_scope: string.quoted.double.poe-filter
+        - match: '"'
+          scope: punctuation.definition.string.end.poe-filter
+          pop: true
